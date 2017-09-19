@@ -34,6 +34,17 @@ all:
 	$(MAKE) clean_sources
 	$(MAKE) macosx
 
+dist-mac: macosx
+	mkdir -p build/MeleeBoyfriend.app/Contents/MacOS
+	mkdir -p build/MeleeBoyfriend.app/Contents/Resources
+	cp build/mhds_macosx build/MeleeBoyfriend.app/Contents/MacOS/MeleeBoyfriend
+	cp -r assets build/MeleeBoyfriend.app/Contents/Resources/
+#	tools/set_icon assets/icon.png build/MeleeBoyfriend.app
+
+dist-mac-dmg: dist-mac
+	cp assets/DMG_Background.png build/Background.png
+	cd build; ../tools/make_dmg.sh
+
 win32 : $(OUTDIR)/mhds.exe
 $(OUTDIR)/mhds.exe: CXXFLAGS += $(shell $(WIN_TOOLCHAIN)pkg-config --cflags glfw3)
 $(OUTDIR)/mhds.exe: LIBS := $(shell $(WIN_TOOLCHAIN)pkg-config openal --static --libs) $(shell $(WIN_TOOLCHAIN)pkg-config glfw3 --static --libs)
@@ -62,7 +73,8 @@ clean_sources:
 	rm -f $(SOURCES) $(PC_SOURCES)
 
 clean:
-	rm -f $(OUTDIR)/* $(SOURCES) $(PC_SOURCES)
+	rm -f $(SOURCES) $(PC_SOURCES)
+	rm -rf $(OUTDIR)/*
 
 doc:
 	rm -rf build/doc

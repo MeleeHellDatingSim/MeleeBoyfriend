@@ -140,7 +140,7 @@ GetMouseState(mouse *Mouse)
 
 float GetWindowAspect()
 {
-    return (float)GetWindowWidth() / (float)GetWindowHeight();
+    return (float)GetWindowHeight() / (float)GetWindowWidth();
 }
 
 

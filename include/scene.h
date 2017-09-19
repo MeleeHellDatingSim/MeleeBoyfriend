@@ -26,7 +26,7 @@ struct scene
 
     scene();
     void Update();
-    void Draw();
+    virtual void Draw();
 };
 
 #endif

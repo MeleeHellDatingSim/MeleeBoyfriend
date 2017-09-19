@@ -176,6 +176,79 @@ const char *OptFullscreenString = "-fullscreen";
 #include <unistd.h>
 #endif
 
+double clamp(double x, double lower, double upper)
+{
+    return std::min(upper, std::max(x, lower));
+}
+
+struct splash : public scene
+{
+    int Updates;
+    float BGScaleX;
+    float BGScaleY;
+    color Color;
+public:
+    splash(texture Texture, color BGColor, float ScaleX, float ScaleY, int Duration)
+    {
+        BackgroundTexture = Texture;
+        BGScaleX = ScaleX;
+        BGScaleY = ScaleY;
+        Updates = Duration;
+        Color = BGColor;
+    }
+
+    virtual void Draw()
+    {
+        float Aspect = GetWindowAspect();
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadIdentity();
+        glTranslatef(10.0 * Aspect, 10.0, 0.0);
+        glScalef(BGScaleX, BGScaleY, 1.0);
+        glTranslatef(-10.0 * Aspect, -10.0, 0.0);
+        glEnable(GL_TEXTURE_2D);
+        BackgroundTexture.Bind();
+        glEnable(GL_BLEND);
+        glColor4f(Color.R, Color.G, Color.B, Color.A);
+        glBegin(GL_QUADS);
+        glTexCoord2f(0, 0);
+        glVertex2f(0, 0);
+        glTexCoord2f(1, 0);
+        glVertex2f(20 * Aspect, 0);
+        glTexCoord2f(1, 1);
+        glVertex2f(20 * Aspect, 20);
+        glTexCoord2f(0, 1);
+        glVertex2f(0, 20);
+        glEnd();
+        glPopMatrix();
+    }
+
+    void Show()
+    {
+        float Total = (float)Updates / 3.0;
+        platform *Platform = GetPlatform();
+        while (Platform->MainLoop() && Updates--) {
+            float Fade = clamp((float) Updates / Total, 0.0, 1.0);
+            color TempColor = Color;
+            Color.R *= Fade;
+            Color.G *= Fade;
+            Color.B *= Fade;
+            glClearColor(Color.R, Color.G, Color.B, Color.A);
+            glClear(GL_COLOR_BUFFER_BIT);
+            glLoadIdentity();
+
+            Draw();
+
+            Color = TempColor;
+            Platform->SwapBuffers();
+        }
+    }
+
+
+
+
+};
+
 int main(int argc, char **argv)
 {
     bool Fullscreen = false;
@@ -193,19 +266,19 @@ int main(int argc, char **argv)
         printf("wat\n");
     }
 #ifdef _3DS
-    if (argc > 0) {
-        chdir(argv[0]);
+    if (argc > 1) {
+        chdir(argv[1]);
     }
     consoleInit(GFX_TOP, NULL);
     printf("Project Meme: Tournament Edition\n");
 #endif
     InitDefaults();
 
-    int Channels;
-    int SampleRate;
-    short *SampleData;
-    int Samples = stb_vorbis_decode_filename("assets/Melee_Acoustic_2.ogg", &Channels, &SampleRate, &SampleData);
-    Platform->PlaySound(SampleRate, SampleData, 2 * Samples * 2);
+//    int Channels;
+//    int SampleRate;
+//    short *SampleData;
+//    int Samples = stb_vorbis_decode_filename("assets/Melee_Acoustic_2.ogg", &Channels, &SampleRate, &SampleData);
+//    Platform->PlaySound(SampleRate, SampleData, 2 * Samples * 2);
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
@@ -228,6 +301,9 @@ int main(int argc, char **argv)
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+
+//    splash WatermarkSplash = splash(texture::Load("assets/Watermark.png"), { 1, 1, 1, 1}, 0.5, 0.5, 60 * 5);
+//    WatermarkSplash.Show();
 
     scene MainScene = {};
     MainScene.BackgroundTexture = texture::Load("assets/Background_Menu.png");
@@ -303,7 +379,7 @@ int main(int argc, char **argv)
 
     MainScene.UIScene.Add(&QuitButton);
 
-    ui_button *MBLogo = new ui_button("");
+    ui_button *MBLogo = new ui_button("test");
     MBLogo->DefaultTexture = texture::Load("assets/meleedat_logo.png");
     MBLogo->Width = 20.0;
     MBLogo->Height = 10.0;
